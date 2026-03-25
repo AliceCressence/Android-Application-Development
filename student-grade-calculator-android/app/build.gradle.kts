@@ -15,12 +15,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        
         multiDexEnabled = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
     }
 
     buildTypes {
@@ -35,31 +31,19 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+    kotlinOptions { jvmTarget = "1.8" }
 
-    buildFeatures {
-        compose = true
-    }
+    buildFeatures { compose = true }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
-    }
+    composeOptions { kotlinCompilerExtensionVersion = "1.5.8" }
 
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // Required for Apache POI on Android:
             excludes += "META-INF/DEPENDENCIES"
             excludes += "META-INF/LICENSE"
-            excludes += "META-INF/LICENSE.txt"
-            excludes += "META-INF/license.txt"
             excludes += "META-INF/NOTICE"
-            excludes += "META-INF/NOTICE.txt"
-            excludes += "META-INF/notice.txt"
-            excludes += "META-INF/ASL2.0"
-            excludes += "META-INF/*.kotlin_module" 
+            excludes += "META-INF/*.kotlin_module"
         }
     }
 }
@@ -74,15 +58,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
-    
     implementation(libs.sqldelight.android.driver)
     implementation(libs.sqldelight.coroutines)
-    
     implementation(libs.poi)
     implementation(libs.poi.ooxml)
     implementation(libs.itext.core)
     implementation(libs.kotlinx.serialization.json)
-    
     debugImplementation(libs.androidx.ui.tooling)
 }
 

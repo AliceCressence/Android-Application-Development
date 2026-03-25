@@ -5,11 +5,14 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
     }
 }
-rootProject.name = "StudentGradeCalculator"
+
+rootProject.name = "student-grade-calculator"
 include(":app")
