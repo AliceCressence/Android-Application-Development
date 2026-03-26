@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS GradeSessionEntity (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  fileName      TEXT    NOT NULL,
+  processedAt   TEXT    NOT NULL,
+  totalStudents INTEGER NOT NULL,
+  passCount     INTEGER NOT NULL,
+  failCount     INTEGER NOT NULL,
+  classAverage  REAL    NOT NULL,
+  studentsJson  TEXT    NOT NULL,
+  headersJson   TEXT    NOT NULL
+);
+
+selectAll:
+SELECT * FROM GradeSessionEntity ORDER BY processedAt DESC;
+
+insert:
+INSERT INTO GradeSessionEntity(
+  fileName, processedAt, totalStudents, passCount,
+  failCount, classAverage, studentsJson, headersJson
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM GradeSessionEntity WHERE id = ?;
+
+deleteAll:
+DELETE FROM GradeSessionEntity;
