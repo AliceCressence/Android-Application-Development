@@ -19,33 +19,12 @@ dependencies {
 
 application {
     mainClass.set("MainKt")
-    // Allows: ./gradlew run --args="--input input.xlsx --output output.xlsx"
-    applicationDefaultJvmArgs = listOf("-Dfile.encoding=UTF-8")
-}
-
-// Configures the fat JAR produced by the Shadow plugin.
-// Running `./gradlew shadowJar` produces:
-//   build/libs/student-grade-calculator-1.0.0-all.jar
-tasks.shadowJar {
-    archiveBaseName.set("student-grade-calculator")
-    archiveClassifier.set("all")
-    archiveVersion.set("1.0.0")
-    manifest {
-        attributes["Main-Class"] = "MainKt"
-    }
 }
 
 tasks.test {
     useJUnitPlatform()
 }
 
-// Align Java and Kotlin to the same JVM target (21).
-// Kotlin 1.9 max supported target is 21, so we pin both here.
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "21"
+kotlin {
+    jvmToolchain(17)
 }

@@ -22,66 +22,62 @@ class ExcelWriter(private val outputPath: String) {
      *
      * @param students       The list of students with computed grade data.
      * @param subjectHeaders Column names for the score columns (e.g. ["Math", "Science"]).
-     *
-     * CORRECTIONS applied:
-     * ─ Removed `for ((col, header) in headers.withIndex())` → replaced with
-     *   `headers.forEachIndexed { col, header -> … }` — same semantics, no loop keyword.
-     * ─ Removed `for ((rowIndex, student) in students.withIndex())` → replaced with
-     *   `students.forEachIndexed { rowIndex, student -> … }`.
-     * ─ Removed `for (score in student.scores)` + `var col = 0` + `col++` mutation
-     *   → replaced with `student.scores.forEachIndexed { i, score -> … }` so the
-     *   column index is derived from the element position, not a mutable counter.
      */
     fun write(students: List<Student>, subjectHeaders: List<String>) {
+        // Step 1 — Create a brand-new XSSF (xlsx) workbook
         val workbook = XSSFWorkbook()
-        val sheet    = workbook.createSheet("Results")
 
-        // ── Header row ───────────────────────────────────────────────────────
+        // Step 2 — Create a sheet named "Results"
+        val sheet = workbook.createSheet("Results")
+
+        // Step 3 — Build and write the header row
         val headers = listOf("StudentID", "Name") +
                 subjectHeaders +
                 listOf("Average", "Grade", "GPA", "Status")
 
+        // createRow(0) creates the first row (header)
         val headerRow = sheet.createRow(0)
-
-        // CORRECTION: `for ((col, header) in headers.withIndex())` → forEachIndexed.
-        // forEachIndexed provides (index, element) without the `for` keyword.
-        headers.forEachIndexed { col, header ->
+        for ((col, header) in headers.withIndex()) {
+            // createCell(col) creates a cell at the given column index
             headerRow.createCell(col).setCellValue(header)
         }
 
-        // ── Data rows ────────────────────────────────────────────────────────
-
-        // CORRECTION: `for ((rowIndex, student) in students.withIndex())` → forEachIndexed.
-        students.forEachIndexed { rowIndex, student ->
-            val row = sheet.createRow(rowIndex + 1) // row 0 is the header
+        // Step 4 — Write one row per student
+        for ((rowIndex, student) in students.withIndex()) {
+            // Data rows start at index 1 (row 0 is the header)
+            val row = sheet.createRow(rowIndex + 1)
+            var col = 0
 
             // Column 0 — Student ID
-            row.createCell(0).setCellValue(student.studentId)
+            row.createCell(col++).setCellValue(student.studentId)
 
             // Column 1 — Name
-            row.createCell(1).setCellValue(student.name)
+            row.createCell(col++).setCellValue(student.name)
 
             // Columns 2..N — Individual subject scores
-            // CORRECTION: Removed `var col = 0` mutable counter + `for (score in scores)`.
-            // forEachIndexed gives us the position `i` of each score within the scores list;
-            // adding 2 gives the correct absolute column index (0=ID, 1=Name, 2+=scores).
-            student.scores.forEachIndexed { i, score ->
-                row.createCell(2 + i).setCellValue(score)
+            for (score in student.scores) {
+                row.createCell(col++).setCellValue(score)
             }
 
-            // Trailing computed columns come right after the last score column.
-            val afterScores = 2 + student.scores.size
-            row.createCell(afterScores    ).setCellValue(student.average)
-            row.createCell(afterScores + 1).setCellValue(student.grade)
-            row.createCell(afterScores + 2).setCellValue(student.gpa)
-            row.createCell(afterScores + 3).setCellValue(student.status)
+            // Average column
+            row.createCell(col++).setCellValue(student.average)
+
+            // Grade column
+            row.createCell(col++).setCellValue(student.grade)
+
+            // GPA column
+            row.createCell(col++).setCellValue(student.gpa)
+
+            // Status column
+            row.createCell(col++).setCellValue(student.status)
         }
 
-        // ── Write to disk ────────────────────────────────────────────────────
+        // Step 5 — Write the workbook to disk using a FileOutputStream
         FileOutputStream(outputPath).use { outputStream ->
             workbook.write(outputStream)
         }
 
+        // Step 6 — Close the workbook to free resources
         workbook.close()
     }
 }

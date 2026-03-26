@@ -25,38 +25,51 @@ class ExcelReader(private val filePath: String) {
      *
      * Computed fields (average, grade, GPA, status) are left at their defaults
      * and should be filled in by [services.GradeCalculator].
-     *
-     * CORRECTIONS applied:
-     * ─ Removed `for (rowIndex in 1..sheet.lastRowNum)` → replaced with
-     *   `(1..sheet.lastRowNum).mapNotNull { }` — a pure functional range map.
-     * ─ Removed inner `for (col in 2 until lastCol)` + `mutableListOf` + `.add()`
-     *   → replaced with `(2 until lastCol).mapNotNull { }` functional range map.
-     * ─ Removed `mutableListOf<Student>()` accumulator + `.add()` mutation
-     *   → the outer map now directly produces the list.
      */
     fun read(): List<Student> {
+        // Step 1 — Open the workbook from the file path using Apache POI's factory
         val workbook = WorkbookFactory.create(File(filePath))
-        val sheet    = workbook.getSheetAt(0)
 
-        // Functional range map — replaces the `for (rowIndex in 1..lastRowNum)` loop.
-        // mapNotNull skips any null rows (e.g. empty rows at the end of the sheet).
-        val students = (1..sheet.lastRowNum)
-            .mapNotNull { rowIndex -> sheet.getRow(rowIndex) }  // skip null rows
-            .map { row ->
-                val studentId = getCellValueAsString(row.getCell(0))
-                val name      = getCellValueAsString(row.getCell(1))
-                val lastCol   = row.lastCellNum.toInt()
+        // Step 2 — Grab the first (and usually only) sheet
+        val sheet = workbook.getSheetAt(0)
 
-                // Functional range map — replaces `for (col in 2 until lastCol)` + mutableListOf.
-                // mapNotNull safely skips any missing cells in the score columns.
-                val scores = (2 until lastCol)
-                    .mapNotNull { col -> row.getCell(col) }     // skip null cells
-                    .map       { cell -> cell.numericCellValue } // extract numeric value
+        val students = mutableListOf<Student>()
 
-                Student(studentId = studentId, name = name, scores = scores)
+        // Step 3 — Iterate over rows, skipping the header at index 0
+        for (rowIndex in 1..sheet.lastRowNum) {
+            val row = sheet.getRow(rowIndex) ?: continue // Skip null rows
+
+            // Column 0 → Student ID (read as string)
+            val studentId = getCellValueAsString(row.getCell(0))
+
+            // Column 1 → Student name
+            val name = getCellValueAsString(row.getCell(1))
+
+            // Columns 2+ → Subject scores (read as doubles)
+            val scores = mutableListOf<Double>()
+            // lastCellNum is 1-based (returns the index of the last cell + 1)
+            val lastCol = row.lastCellNum.toInt()
+            for (col in 2 until lastCol) {
+                val cell = row.getCell(col)
+                if (cell != null) {
+                    // getNumericCellValue() returns the numeric value of the cell
+                    scores.add(cell.numericCellValue)
+                }
             }
 
+            // Step 4 — Create a Student with only the raw data
+            students.add(
+                Student(
+                    studentId = studentId,
+                    name = name,
+                    scores = scores
+                )
+            )
+        }
+
+        // Step 5 — Close the workbook to release file resources
         workbook.close()
+
         return students
     }
 
@@ -66,20 +79,23 @@ class ExcelReader(private val filePath: String) {
      *
      * This is useful for [io.ExcelWriter] so it can reproduce the same subject
      * headers in the output file.
-     *
-     * CORRECTION: Removed `for (col in 2 until lastCol)` + `mutableListOf` + `.add()`
-     * → replaced with `(2 until lastCol).mapNotNull { }` functional range map.
      */
     fun readSubjectHeaders(): List<String> {
-        val workbook  = WorkbookFactory.create(File(filePath))
-        val sheet     = workbook.getSheetAt(0)
-        val headerRow = sheet.getRow(0)
-        val lastCol   = headerRow.lastCellNum.toInt()
+        val workbook = WorkbookFactory.create(File(filePath))
+        val sheet = workbook.getSheetAt(0)
 
-        // Functional range map — replaces `for (col in 2 until lastCol)` loop.
-        val headers = (2 until lastCol)
-            .mapNotNull { col -> headerRow.getCell(col) }   // skip null header cells
-            .map        { cell -> cell.stringCellValue }     // extract string value
+        // The header row is row 0
+        val headerRow = sheet.getRow(0)
+        val headers = mutableListOf<String>()
+
+        // Extract column names starting from index 2 (skip StudentID, Name)
+        val lastCol = headerRow.lastCellNum.toInt()
+        for (col in 2 until lastCol) {
+            val cell = headerRow.getCell(col)
+            if (cell != null) {
+                headers.add(cell.stringCellValue)
+            }
+        }
 
         workbook.close()
         return headers
